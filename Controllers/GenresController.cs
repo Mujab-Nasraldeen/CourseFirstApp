@@ -1,7 +1,6 @@
-using CourseFirstApp.Data;
+using CourseFirstApp.IServices;
 using CourseFirstApp.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CourseFirstApp.Controllers
 {
@@ -9,18 +8,18 @@ namespace CourseFirstApp.Controllers
     [ApiController]
     public class GenresController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IGenreService _genreService;
 
-        public GenresController(AppDbContext context)
+        public GenresController(IGenreService genreService)
         {
-            _context = context;
+            _genreService = genreService;
         }
 
         // GET: api/Genres
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var genres = await _context.Genres.ToListAsync();
+            var genres = await _genreService.GetAllAsync();
             return Ok(genres);
         }
 
@@ -28,7 +27,7 @@ namespace CourseFirstApp.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(long id)
         {
-            var genre = await _context.Genres.FindAsync(id);
+            var genre = await _genreService.GetByIdAsync(id);
 
             if (genre == null)
                 return NotFound($"لم يتم العثور على Genre بالـ Id: {id}");
@@ -43,10 +42,8 @@ namespace CourseFirstApp.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            await _context.Genres.AddAsync(genre);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = genre.Id }, genre);
+            var created = await _genreService.CreateAsync(genre);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // PUT: api/Genres/5
@@ -56,31 +53,24 @@ namespace CourseFirstApp.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var existingGenre = await _context.Genres.FindAsync(id);
+            var updated = await _genreService.UpdateAsync(id, genre);
 
-            if (existingGenre == null)
+            if (updated == null)
                 return NotFound($"لم يتم العثور على Genre بالـ Id: {id}");
 
-            existingGenre.Name = genre.Name;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(existingGenre);
+            return Ok(updated);
         }
 
         // DELETE: api/Genres/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var genre = await _context.Genres.FindAsync(id);
+            var deleted = await _genreService.DeleteAsync(id);
 
-            if (genre == null)
+            if (deleted == null)
                 return NotFound($"لم يتم العثور على Genre بالـ Id: {id}");
 
-            _context.Genres.Remove(genre);
-            await _context.SaveChangesAsync();
-
-            return Ok(genre);
+            return Ok(deleted);
         }
     }
 }

@@ -1,4 +1,6 @@
 using CourseFirstApp.Data;
+using CourseFirstApp.IServices;
+using CourseFirstApp.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +13,11 @@ builder.Services.AddOpenApi();
 
 // تسجيل AppDbContext مع قاعدة البيانات
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MoviesDb")));
+
+// تسجيل الـ Services
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IMovieService, MovieService>();
 
 var app = builder.Build();
 

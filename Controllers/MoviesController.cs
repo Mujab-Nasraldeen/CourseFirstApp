@@ -1,7 +1,6 @@
-using CourseFirstApp.Data;
+using CourseFirstApp.IServices;
 using CourseFirstApp.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CourseFirstApp.Controllers
 {
@@ -9,21 +8,18 @@ namespace CourseFirstApp.Controllers
     [ApiController]
     public class MoviesController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IMovieService _movieService;
 
-        public MoviesController(AppDbContext context)
+        public MoviesController(IMovieService movieService)
         {
-            _context = context;
+            _movieService = movieService;
         }
 
         // GET: api/Movies
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var movies = await _context.Movies
-                .Include(m => m.Genre)
-                .ToListAsync();
-
+            var movies = await _movieService.GetAllAsync();
             return Ok(movies);
         }
 
@@ -31,9 +27,7 @@ namespace CourseFirstApp.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(long id)
         {
-            var movie = await _context.Movies
-                .Include(m => m.Genre)
-                .SingleOrDefaultAsync(m => m.Id == id);
+            var movie = await _movieService.GetByIdAsync(id);
 
             if (movie == null)
                 return NotFound($"لم يتم العثور على Movie بالـ Id: {id}");
@@ -48,15 +42,12 @@ namespace CourseFirstApp.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // التحقق من وجود الـ Genre
-            var genreExists = await _context.Genres.AnyAsync(g => g.Id == movie.GenreId);
-            if (!genreExists)
+            var created = await _movieService.CreateAsync(movie);
+
+            if (created == null)
                 return BadRequest($"لا يوجد Genre بالـ Id: {movie.GenreId}");
 
-            await _context.Movies.AddAsync(movie);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = movie.Id }, movie);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // PUT: api/Movies/5
@@ -66,40 +57,24 @@ namespace CourseFirstApp.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var existingMovie = await _context.Movies.FindAsync(id);
+            var updated = await _movieService.UpdateAsync(id, movie);
 
-            if (existingMovie == null)
-                return NotFound($"لم يتم العثور على Movie بالـ Id: {id}");
+            if (updated == null)
+                return NotFound($"لم يتم العثور على Movie بالـ Id: {id} أو GenreId غير صحيح");
 
-            // التحقق من وجود الـ Genre
-            var genreExists = await _context.Genres.AnyAsync(g => g.Id == movie.GenreId);
-            if (!genreExists)
-                return BadRequest($"لا يوجد Genre بالـ Id: {movie.GenreId}");
-
-            existingMovie.Title    = movie.Title;
-            existingMovie.Year     = movie.Year;
-            existingMovie.Rate     = movie.Rate;
-            existingMovie.Location = movie.Location;
-            existingMovie.GenreId  = movie.GenreId;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(existingMovie);
+            return Ok(updated);
         }
 
         // DELETE: api/Movies/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var movie = await _context.Movies.FindAsync(id);
+            var deleted = await _movieService.DeleteAsync(id);
 
-            if (movie == null)
+            if (deleted == null)
                 return NotFound($"لم يتم العثور على Movie بالـ Id: {id}");
 
-            _context.Movies.Remove(movie);
-            await _context.SaveChangesAsync();
-
-            return Ok(movie);
+            return Ok(deleted);
         }
     }
 }
