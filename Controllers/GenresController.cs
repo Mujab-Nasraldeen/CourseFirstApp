@@ -7,14 +7,9 @@ namespace CourseFirstApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GenresController : ControllerBase
+    public class GenresController(AppDbContext context) : ControllerBase
     {
-        private readonly AppDbContext _context;
-
-        public GenresController(AppDbContext context)
-        {
-            _context = context;
-        }
+        private readonly AppDbContext _context = context;
 
         // GET: api/Genres
         [HttpGet]
@@ -63,6 +58,7 @@ namespace CourseFirstApp.Controllers
 
             existingGenre.Name = genre.Name;
 
+            _context.Genres.Update(existingGenre);
             await _context.SaveChangesAsync();
 
             return Ok(existingGenre);
