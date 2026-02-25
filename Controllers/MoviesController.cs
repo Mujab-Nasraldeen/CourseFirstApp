@@ -6,14 +6,9 @@ namespace CourseFirstApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MoviesController : ControllerBase
+    public class MoviesController(IMovieService movieService) : ControllerBase
     {
-        private readonly IMovieService _movieService;
-
-        public MoviesController(IMovieService movieService)
-        {
-            _movieService = movieService;
-        }
+        private readonly IMovieService _movieService = movieService;
 
         // GET: api/Movies
         [HttpGet]

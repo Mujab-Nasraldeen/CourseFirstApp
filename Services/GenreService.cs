@@ -5,14 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseFirstApp.Services
 {
-    public class GenreService : IGenreService
+    public class GenreService(AppDbContext context) : IGenreService
     {
-        private readonly AppDbContext _context;
-
-        public GenreService(AppDbContext context)
-        {
-            _context = context;
-        }
+        private readonly AppDbContext _context = context;
 
         public async Task<IEnumerable<Genre>> GetAllAsync()
         {
